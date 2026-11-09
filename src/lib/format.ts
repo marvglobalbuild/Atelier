@@ -1,13 +1,32 @@
+const CURRENCY_LOCALES: Record<string, string> = {
+  NGN: "en-NG",
+  GHS: "en-GH",
+  KES: "en-KE",
+  ZAR: "en-ZA",
+  GBP: "en-GB",
+  USD: "en-US",
+  EUR: "en-IE",
+  CAD: "en-CA",
+  AUD: "en-AU",
+};
+
 export function money(amount: number, currency = "NGN") {
+  const locale = CURRENCY_LOCALES[currency] ?? "en";
   try {
-    return new Intl.NumberFormat("en", {
+    let formatted = new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
       maximumFractionDigits: 2,
       minimumFractionDigits: 0,
     }).format(amount);
+
+    if (currency === "NGN" && formatted.includes("NGN")) {
+      formatted = formatted.replace(/NGN\s*/g, "₦");
+    }
+    return formatted;
   } catch {
-    return `${currency} ${amount.toLocaleString()}`;
+    const symbol = currency === "NGN" ? "₦" : `${currency} `;
+    return `${symbol}${amount.toLocaleString()}`;
   }
 }
 

@@ -488,18 +488,27 @@ function DemoPayments({ orders }: { orders: DemoOrder[] }) {
       <div className="surface p-5">
         <p className="eyebrow">Payment summary</p>
         <h4 className="font-display mt-2 text-2xl">{o.outfit}</h4>
-        <div className="mt-6 grid grid-cols-3 gap-4 text-sm">
-          <div>
+        <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4 text-sm">
+          <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Order total</p>
-            <p className="tabular mt-1 font-semibold">{money(o.price)}</p>
+            <p className="tabular mt-1 font-semibold truncate" title={money(o.price)}>
+              {money(o.price)}
+            </p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Received</p>
-            <p className="tabular mt-1 font-semibold text-success">{money(s.paid)}</p>
+            <p className="tabular mt-1 font-semibold text-success truncate" title={money(s.paid)}>
+              {money(s.paid)}
+            </p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Balance</p>
-            <p className="tabular mt-1 font-semibold">{money(Math.max(s.balance, 0))}</p>
+            <p
+              className="tabular mt-1 font-semibold truncate"
+              title={money(Math.max(s.balance, 0))}
+            >
+              {money(Math.max(s.balance, 0))}
+            </p>
           </div>
         </div>
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-secondary">

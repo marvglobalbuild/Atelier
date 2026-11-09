@@ -498,20 +498,35 @@ export function NumbersStory() {
           }
           body="Record each deposit as it arrives. Balances are calculated from real transactions — never typed over, never guessed."
         />
-        <div className="surface p-6 shadow-[var(--shadow-float)]">
+        <div className="surface p-5 sm:p-6 shadow-[var(--shadow-float)]">
           <p className="text-sm text-muted-foreground">Ivory print evening gown</p>
-          <div className="mt-4 grid grid-cols-3 gap-4">
-            <div>
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Total</p>
-              <p className="tabular mt-1 text-lg font-semibold">{money(price)}</p>
+              <p
+                className="tabular mt-1 text-sm font-semibold sm:text-base md:text-lg truncate"
+                title={money(price)}
+              >
+                {money(price)}
+              </p>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Received</p>
-              <p className="tabular mt-1 text-lg font-semibold text-success">{money(paid)}</p>
+              <p
+                className="tabular mt-1 text-sm font-semibold text-success sm:text-base md:text-lg truncate"
+                title={money(paid)}
+              >
+                {money(paid)}
+              </p>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Balance</p>
-              <p className="tabular mt-1 text-lg font-semibold">{money(price - paid)}</p>
+              <p
+                className="tabular mt-1 text-sm font-semibold sm:text-base md:text-lg truncate"
+                title={money(price - paid)}
+              >
+                {money(price - paid)}
+              </p>
             </div>
           </div>
           <div className="mt-6 h-2 overflow-hidden rounded-full bg-secondary">

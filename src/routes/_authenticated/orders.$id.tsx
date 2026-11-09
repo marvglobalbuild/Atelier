@@ -294,22 +294,33 @@ function OrderPage() {
           }
         >
           <div className="p-4">
-            <div className="grid grid-cols-3 gap-3 text-sm">
-              <div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 text-sm">
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Total</p>
-                <p className="tabular mt-1 font-semibold">{money(Number(o.price), b.currency)}</p>
+                <p
+                  className="tabular mt-1 font-semibold truncate"
+                  title={money(Number(o.price), b.currency)}
+                >
+                  {money(Number(o.price), b.currency)}
+                </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Received</p>
-                <p className="tabular mt-1 font-semibold text-success">
+                <p
+                  className="tabular mt-1 font-semibold text-success truncate"
+                  title={money(ps.paid, b.currency)}
+                >
                   {money(ps.paid, b.currency)}
                 </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">
                   {ps.balance < 0 ? "Overpaid" : "Balance"}
                 </p>
-                <p className="tabular mt-1 font-semibold">
+                <p
+                  className="tabular mt-1 font-semibold truncate"
+                  title={money(Math.abs(ps.balance), b.currency)}
+                >
                   {money(Math.abs(ps.balance), b.currency)}
                 </p>
               </div>
