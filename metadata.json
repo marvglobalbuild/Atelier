@@ -1,0 +1,6 @@
+{
+  "name": "Atelier — Fashion business manager",
+  "description": "Customers, measurements, style inspiration, orders and payments for independent fashion designers and tailors.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,42 @@
+export function money(amount: number, currency = "NGN") {
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toLocaleString()}`;
+  }
+}
+
+export function shortDate(d: string | Date | null | undefined) {
+  if (!d) return "—";
+  const date = typeof d === "string" ? new Date(d.length === 10 ? d + "T00:00:00" : d) : d;
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+export function longDate(d: string | Date | null | undefined) {
+  if (!d) return "—";
+  const date = typeof d === "string" ? new Date(d.length === 10 ? d + "T00:00:00" : d) : d;
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
+}
+
+export function isoDay(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export const CURRENCIES = ["NGN", "GHS", "KES", "ZAR", "XOF", "USD", "GBP", "EUR"];
