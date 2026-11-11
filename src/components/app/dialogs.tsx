@@ -367,11 +367,15 @@ export function OrderDialog({
   open,
   onOpenChange,
   customerId,
+  defaultOutfitName,
+  defaultDescription,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   customerId?: string;
+  defaultOutfitName?: string;
+  defaultDescription?: string;
   onSaved?: (id: string) => void;
 }) {
   const b = useBusiness();
@@ -379,8 +383,8 @@ export function OrderDialog({
   const { data: customers = [] } = useQuery({ ...customersQuery, enabled: open });
   const [f, setF] = useState({
     customer_id: customerId ?? "",
-    outfit_name: "",
-    description: "",
+    outfit_name: defaultOutfitName ?? "",
+    description: defaultDescription ?? "",
     quantity: "1",
     price: "",
     due_date: "",
@@ -405,8 +409,8 @@ export function OrderDialog({
     if (open)
       setF({
         customer_id: customerId ?? "",
-        outfit_name: "",
-        description: "",
+        outfit_name: defaultOutfitName ?? "",
+        description: defaultDescription ?? "",
         quantity: "1",
         price: "",
         due_date: "",
@@ -414,7 +418,7 @@ export function OrderDialog({
         set_id: "",
         deposit: "",
       });
-  }, [open, customerId]);
+  }, [open, customerId, defaultOutfitName, defaultDescription]);
   useEffect(() => {
     if (sets[0] && !f.set_id) setF((x) => ({ ...x, set_id: sets[0].id }));
   }, [sets]); // eslint-disable-line react-hooks/exhaustive-deps

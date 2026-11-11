@@ -73,18 +73,19 @@ export function AdminOverviewPage() {
     },
     {
       id: "paid",
-      label: "Paid Users",
-      value: stats?.paidUsers ? stats.paidUsers.toLocaleString() : "0",
-      emptyState: "Stripe subscription billing not yet connected",
-      sub: "Active paid subscribers",
+      label: "Paid Subscribers",
+      value: (stats?.paidUsers ?? 0).toLocaleString(),
+      sub: stats?.paidUsers
+        ? `${stats.paidUsers} active paid SaaS subscriptions`
+        : "All on Community Tier",
       icon: CreditCard,
       href: "/admin/subscriptions",
     },
     {
       id: "revenue",
-      label: "Monthly Revenue (MRR)",
+      label: "Gross Processed Volume (GMV)",
       value: money(stats?.monthlyRevenue ?? 0, stats?.currency || "NGN"),
-      sub: "Platform recorded volume",
+      sub: `SaaS MRR: $${stats?.subscriptionMrr ?? 0}.00/mo`,
       icon: DollarSign,
       href: "/admin/revenue",
     },

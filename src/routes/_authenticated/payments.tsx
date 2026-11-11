@@ -10,6 +10,7 @@ import {
   Clock,
   CheckCircle2,
   Printer,
+  MessageSquare,
 } from "lucide-react";
 import { paymentsQuery, ordersQuery, useBusiness } from "@/lib/api";
 import { money, shortDate, longDate, isoDay } from "@/lib/format";
@@ -18,6 +19,7 @@ import { PageHeader, Empty, Panel } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PaymentDialog } from "@/components/app/dialogs";
+import { WhatsAppDialog } from "@/components/app/WhatsAppDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +47,15 @@ export function PaymentsPage() {
   const [periodFilter, setPeriodFilter] = useState("all");
   const [isRecordOpen, setIsRecordOpen] = useState(false);
   const [receiptPayment, setReceiptPayment] = useState<(typeof payments)[number] | null>(null);
+  const [whatsAppModal, setWhatsAppModal] = useState<{
+    open: boolean;
+    customerName?: string;
+    customerPhone?: string;
+    orderTitle?: string;
+    paymentAmount?: number;
+    orderTotal?: number;
+    orderBalance?: number;
+  }>({ open: false });
 
   // Calculate high-level financial metrics
   const stats = useMemo(() => {
@@ -300,15 +311,40 @@ export function PaymentsPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                          title="Generate payment voucher / receipt"
-                          onClick={() => setReceiptPayment(p)}
-                        >
-                          <Receipt className="size-4" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                            title="Generate payment voucher / receipt"
+                            onClick={() => setReceiptPayment(p)}
+                          >
+                            <Receipt className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-600"
+                            title="Send receipt to client via WhatsApp"
+                            onClick={() => {
+                              const order = p.orders;
+                              const customer = order?.customers;
+                              setWhatsAppModal({
+                                open: true,
+                                customerName: customer?.full_name || "",
+                                customerPhone: customer?.phone || "",
+                                orderTitle: order?.outfit_name || "Bespoke Garment",
+                                paymentAmount: Number(p.amount),
+                                orderTotal: order?.price ? Number(order.price) : Number(p.amount),
+                                orderBalance: order?.price
+                                  ? Math.max(0, Number(order.price) - Number(p.amount))
+                                  : 0,
+                              });
+                            }}
+                          >
+                            <MessageSquare className="size-4 text-emerald-600" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -381,6 +417,31 @@ export function PaymentsPage() {
                   Close
                 </Button>
                 <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                  onClick={() => {
+                    const order = receiptPayment.orders;
+                    const customer = order?.customers;
+                    setWhatsAppModal({
+                      open: true,
+                      customerName: customer?.full_name || "",
+                      customerPhone: customer?.phone || "",
+                      orderTitle: order?.outfit_name || "Bespoke Garment",
+                      paymentAmount: Number(receiptPayment.amount),
+                      orderTotal: order?.price
+                        ? Number(order.price)
+                        : Number(receiptPayment.amount),
+                      orderBalance: order?.price
+                        ? Math.max(0, Number(order.price) - Number(receiptPayment.amount))
+                        : 0,
+                    });
+                  }}
+                >
+                  <MessageSquare className="size-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
+                  WhatsApp Receipt
+                </Button>
+                <Button
                   variant="ink"
                   size="sm"
                   onClick={() => {
@@ -397,6 +458,19 @@ export function PaymentsPage() {
 
       {/* Record Payment Dialog */}
       <PaymentDialog open={isRecordOpen} onOpenChange={setIsRecordOpen} />
+
+      {/* WhatsApp Payment Receipt Modal */}
+      <WhatsAppDialog
+        open={whatsAppModal.open}
+        onOpenChange={(open) => setWhatsAppModal((prev) => ({ ...prev, open }))}
+        defaultMode="payment"
+        customerName={whatsAppModal.customerName}
+        customerPhone={whatsAppModal.customerPhone}
+        orderTitle={whatsAppModal.orderTitle}
+        paymentAmount={whatsAppModal.paymentAmount}
+        orderTotal={whatsAppModal.orderTotal}
+        orderBalance={whatsAppModal.orderBalance}
+      />
     </div>
   );
 }

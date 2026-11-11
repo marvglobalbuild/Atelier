@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MessageSquare, Printer, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   check,
@@ -25,6 +25,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { PaymentDialog } from "@/components/app/dialogs";
+import { WhatsAppDialog } from "@/components/app/WhatsAppDialog";
+import { CuttingTicketModal } from "@/components/app/CuttingTicketModal";
+import { GarmentHangtagModal } from "@/components/app/GarmentHangtagModal";
 import { Panel, PayBadge, StatusBadge } from "@/components/app/ui";
 import { cn } from "@/lib/utils";
 
@@ -40,10 +43,25 @@ function OrderPage() {
   const inv = useInvalidate();
   const { data } = useSuspenseQuery(orderQuery(id));
   const { data: lib } = useQuery(stylesQuery);
-  const { order: o, payments, snapshots, styles } = data;
+  const { order: o, payments, snapshots, styles, fallbackMeasurements } = data;
   const update = useUpdateOrderStatus();
   const [pay, setPay] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [ticketOpen, setTicketOpen] = useState(false);
+  const [hangtagOpen, setHangtagOpen] = useState(false);
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false);
+  const [whatsAppMode, setWhatsAppMode] = useState<"stage" | "fitting" | "receipt" | "custom">(
+    "stage",
+  );
+
+  const activeMeasurements =
+    snapshots.length > 0
+      ? (snapshots[0].values as { label: string; value: number }[])
+      : (fallbackMeasurements?.values ?? []);
+  const activeGarment =
+    snapshots.length > 0 ? snapshots[0].garment : (fallbackMeasurements?.garment ?? o.outfit_name);
+  const activeUnit =
+    snapshots.length > 0 ? snapshots[0].unit : (fallbackMeasurements?.unit ?? "inches");
   const [f, setF] = useState({
     outfit_name: o.outfit_name,
     description: o.description ?? "",
@@ -121,6 +139,36 @@ function OrderPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setWhatsAppMode("stage");
+              setWhatsAppOpen(true);
+            }}
+            className="h-8 gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 shadow-sm"
+          >
+            <MessageSquare className="size-3.5 text-emerald-600" />
+            <span>WhatsApp Client</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setTicketOpen(true)}
+            className="h-8 gap-1.5 shadow-sm"
+          >
+            <Printer className="size-3.5" />
+            <span>Cutting Ticket</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHangtagOpen(true)}
+            className="h-8 gap-1.5 shadow-sm"
+          >
+            <Tag className="size-3.5 text-primary" />
+            <span>Garment Tag</span>
+          </Button>
           <StatusBadge status={o.status} />
           <Button variant="quiet" size="sm" onClick={() => setEditing((x) => !x)}>
             {editing ? "Cancel" : "Edit"}
@@ -232,11 +280,49 @@ function OrderPage() {
               </div>
             </dl>
           </Panel>
-          <Panel title="Measurement snapshot">
+          <Panel
+            title="Measurement snapshot"
+            action={
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTicketOpen(true)}
+                className="h-7 text-xs gap-1.5 text-primary hover:text-primary"
+              >
+                <Printer className="size-3" />
+                Workshop Ticket
+              </Button>
+            }
+          >
             {snapshots.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">
-                No measurements were attached when this order was created.
-              </p>
+              fallbackMeasurements && fallbackMeasurements.values.length > 0 ? (
+                <div className="p-4">
+                  <div className="flex items-center justify-between pb-1">
+                    <p className="text-xs text-muted-foreground">
+                      {fallbackMeasurements.garment} · from Customer Master File ·{" "}
+                      {fallbackMeasurements.unit}
+                    </p>
+                    <span className="text-[10px] font-mono uppercase bg-secondary px-2 py-0.5 rounded text-muted-foreground">
+                      Profile Default
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                    {fallbackMeasurements.values.map((v) => (
+                      <div
+                        key={v.label}
+                        className="flex justify-between border-b border-dashed border-border pb-1"
+                      >
+                        <dt className="text-muted-foreground">{v.label}</dt>
+                        <dd className="tabular">{v.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ) : (
+                <p className="p-4 text-sm text-muted-foreground">
+                  No measurements were attached when this order was created.
+                </p>
+              )
             ) : (
               snapshots.map((s) => (
                 <div key={s.id} className="p-4">
@@ -288,9 +374,25 @@ function OrderPage() {
         <Panel
           title="Payments"
           action={
-            <Button variant="ink" size="sm" onClick={() => setPay(true)}>
-              Record payment
-            </Button>
+            <div className="flex items-center gap-2">
+              {payments.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setWhatsAppMode("receipt");
+                    setWhatsAppOpen(true);
+                  }}
+                  className="h-8 gap-1.5 text-xs border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                >
+                  <MessageSquare className="size-3 text-emerald-600" />
+                  <span>Send Receipt</span>
+                </Button>
+              )}
+              <Button variant="ink" size="sm" onClick={() => setPay(true)}>
+                Record payment
+              </Button>
+            </div>
           }
         >
           <div className="p-4">
@@ -354,6 +456,36 @@ function OrderPage() {
         </Panel>
       </div>
       <PaymentDialog open={pay} onOpenChange={setPay} orderId={o.id} />
+      <WhatsAppDialog
+        open={whatsAppOpen}
+        onOpenChange={setWhatsAppOpen}
+        clientName={o.customers?.full_name || "Valued Client"}
+        clientPhone={o.customers?.phone}
+        orderTitle={o.outfit_name}
+        currentStage={o.status}
+        dueDate={o.due_date ? longDate(o.due_date) : null}
+        balanceDue={ps.balance > 0 ? ps.balance : 0}
+        totalOrderPrice={Number(o.price)}
+        paymentAmount={payments[0]?.amount ? Number(payments[0].amount) : undefined}
+        defaultMode={whatsAppMode}
+      />
+      <CuttingTicketModal
+        open={ticketOpen}
+        onOpenChange={setTicketOpen}
+        order={o}
+        businessName={b.name}
+        currency={b.currency}
+        measurements={activeMeasurements}
+        measurementGarment={activeGarment}
+        measurementUnit={activeUnit}
+      />
+      <GarmentHangtagModal
+        open={hangtagOpen}
+        onOpenChange={setHangtagOpen}
+        order={o}
+        businessName={b.name}
+        currency={b.currency}
+      />
     </div>
   );
 }

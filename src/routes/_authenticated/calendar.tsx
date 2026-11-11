@@ -14,7 +14,9 @@ import {
   AlertCircle,
   MapPin,
   Trash2,
+  MessageSquare,
 } from "lucide-react";
+import { WhatsAppDialog } from "@/components/app/WhatsAppDialog";
 import { toast } from "sonner";
 import {
   appointmentsQuery,
@@ -76,6 +78,19 @@ export function CalendarPage() {
   const [bookTime, setBookTime] = useState("14:00");
   const [bookNotes, setBookNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [whatsAppModal, setWhatsAppModal] = useState<{
+    open: boolean;
+    customerName?: string;
+    customerPhone?: string;
+    mode?: "stage" | "fitting" | "payment" | "custom";
+    orderTitle?: string;
+    fittingDate?: string;
+    fittingTime?: string;
+    notes?: string;
+    stageName?: string;
+    deliveryDate?: string;
+  }>({ open: false });
 
   // Calendar month days calculation
   const calendarGrid = useMemo(() => {
@@ -376,13 +391,35 @@ export function CalendarPage() {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           Client: {del.customers?.full_name ?? "Client"}
                         </p>
-                        <Link
-                          to="/orders/$id"
-                          params={{ id: del.id }}
-                          className="mt-2 text-xs text-primary underline-offset-4 hover:underline block font-medium"
-                        >
-                          View order details →
-                        </Link>
+                        <div className="mt-3 flex items-center justify-between pt-2 border-t border-success/20">
+                          <Link
+                            to="/orders/$id"
+                            params={{ id: del.id }}
+                            className="text-xs text-primary underline-offset-4 hover:underline font-medium"
+                          >
+                            View order details →
+                          </Link>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1.5 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                            onClick={() => {
+                              setWhatsAppModal({
+                                open: true,
+                                mode: "stage",
+                                customerName: del.customers?.full_name || "",
+                                customerPhone: del.customers?.phone || "",
+                                orderTitle: del.outfit_name,
+                                stageName: del.status,
+                                deliveryDate: del.due_date ? shortDate(del.due_date) : undefined,
+                              });
+                            }}
+                          >
+                            <MessageSquare className="size-3 text-emerald-600 dark:text-emerald-400" />
+                            WhatsApp Client
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -445,6 +482,33 @@ export function CalendarPage() {
                             {apt.notes}
                           </p>
                         )}
+
+                        <div className="mt-3 flex items-center justify-between pt-2 border-t border-border/50">
+                          <span className="text-[11px] text-muted-foreground">
+                            Direct notification
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1.5 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                            onClick={() => {
+                              setWhatsAppModal({
+                                open: true,
+                                mode: "fitting",
+                                customerName: apt.customers?.full_name || "",
+                                customerPhone: apt.customers?.phone || "",
+                                orderTitle: apt.orders?.outfit_name || apt.title,
+                                fittingDate: shortDate(apt.starts_at),
+                                fittingTime: timeStr,
+                                notes: apt.notes || "",
+                              });
+                            }}
+                          >
+                            <MessageSquare className="size-3 text-emerald-600 dark:text-emerald-400" />
+                            WhatsApp Reminder
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
@@ -576,6 +640,21 @@ export function CalendarPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* WhatsApp Client Messaging Modal */}
+      <WhatsAppDialog
+        open={whatsAppModal.open}
+        onOpenChange={(open) => setWhatsAppModal((prev) => ({ ...prev, open }))}
+        defaultMode={whatsAppModal.mode || "fitting"}
+        customerName={whatsAppModal.customerName}
+        customerPhone={whatsAppModal.customerPhone}
+        orderTitle={whatsAppModal.orderTitle}
+        fittingDate={whatsAppModal.fittingDate}
+        fittingTime={whatsAppModal.fittingTime}
+        notes={whatsAppModal.notes}
+        stageName={whatsAppModal.stageName}
+        deliveryDate={whatsAppModal.deliveryDate}
+      />
     </div>
   );
 }

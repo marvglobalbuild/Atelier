@@ -162,3 +162,35 @@
   background-image: radial-gradient(oklch(0.235 0.004 85 / 0.035) 1px, transparent 1px);
   background-size: 3px 3px;
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  nav,
+  header,
+  aside,
+  .print\:hidden {
+    display: none !important;
+  }
+  [role="dialog"] {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+  [data-state="open"] > .fixed.inset-0 {
+    display: none !important;
+  }
+}

@@ -19,6 +19,32 @@ export const PLATFORM_OWNER_EMAILS: string[] = Array.from(
   ]),
 );
 
+export function getCustomAdminEmails(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("atelier_custom_admin_emails");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addCustomAdminEmail(email: string): boolean {
+  const clean = email.trim().toLowerCase();
+  if (!clean || !clean.includes("@")) return false;
+  const list = getCustomAdminEmails();
+  if (list.includes(clean)) return true;
+  list.push(clean);
+  localStorage.setItem("atelier_custom_admin_emails", JSON.stringify(list));
+  return true;
+}
+
+export function removeCustomAdminEmail(email: string) {
+  const clean = email.trim().toLowerCase();
+  const list = getCustomAdminEmails().filter((e) => e !== clean);
+  localStorage.setItem("atelier_custom_admin_emails", JSON.stringify(list));
+}
+
 /**
  * Validates if the authenticated user has platform administration privileges.
  * Enforces role-based and identity-based authorization checks.
@@ -33,7 +59,13 @@ export function checkIsAdmin(user: User | null): boolean {
     return true;
   }
 
-  // 2. User metadata or app_metadata role check (assigned via Supabase dashboard / backend)
+  // 2. Custom secondary admin email whitelist check
+  const customAdmins = getCustomAdminEmails();
+  if (customAdmins.includes(email)) {
+    return true;
+  }
+
+  // 3. User metadata or app_metadata role check (assigned via Supabase dashboard / backend)
   const appRole = (user.app_metadata as { role?: string } | undefined)?.role;
   const userRole = (user.user_metadata as { role?: string } | undefined)?.role;
 

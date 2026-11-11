@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Printer, Tag } from "lucide-react";
 import { ordersQuery, useBusiness, useUpdateOrderStatus } from "@/lib/api";
 import {
   ACTIVE_STATUSES,
@@ -16,6 +16,8 @@ import { money, shortDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrderDialog } from "@/components/app/dialogs";
+import { CuttingTicketModal } from "@/components/app/CuttingTicketModal";
+import { GarmentHangtagModal } from "@/components/app/GarmentHangtagModal";
 import { Empty, PageHeader, PayBadge } from "@/components/app/ui";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +45,12 @@ function Orders() {
   const update = useUpdateOrderStatus();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [selectedTicketOrder, setSelectedTicketOrder] = useState<(typeof data)[number] | null>(
+    null,
+  );
+  const [selectedHangtagOrder, setSelectedHangtagOrder] = useState<(typeof data)[number] | null>(
+    null,
+  );
 
   const list = data.filter((o) => {
     if (filter === "active" && !ACTIVE_STATUSES.includes(o.status)) return false;
@@ -104,7 +112,7 @@ function Orders() {
             return (
               <div
                 key={o.id}
-                className="grid gap-3 border-b border-border px-4 py-3.5 last:border-0 sm:grid-cols-[1.6fr_auto_auto_180px] sm:items-center sm:gap-5"
+                className="grid gap-3 border-b border-border px-4 py-3.5 last:border-0 sm:grid-cols-[1.6fr_auto_auto_260px] sm:items-center sm:gap-5"
               >
                 <Link to="/orders/$id" params={{ id: o.id }} className="group min-w-0">
                   <p className="truncate text-sm font-medium group-hover:text-primary">
@@ -126,21 +134,41 @@ function Orders() {
                 </Link>
                 <span className="tabular text-sm">{money(Number(o.price), b.currency)}</span>
                 <PayBadge status={ps.status} />
-                <select
-                  aria-label={`Status for ${o.outfit_name}`}
-                  value={o.status}
-                  disabled={update.isPending}
-                  onChange={(e) =>
-                    update.mutate({ order: o, status: e.target.value as OrderStatus })
-                  }
-                  className="h-9 rounded-md border border-input bg-card px-2.5 text-sm"
-                >
-                  {ORDER_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    aria-label={`Status for ${o.outfit_name}`}
+                    value={o.status}
+                    disabled={update.isPending}
+                    onChange={(e) =>
+                      update.mutate({ order: o, status: e.target.value as OrderStatus })
+                    }
+                    className="h-9 flex-1 rounded-md border border-input bg-card px-2.5 text-sm"
+                  >
+                    {ORDER_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {STATUS_LABEL[s]}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground shrink-0"
+                    title="Print workshop cutting ticket"
+                    onClick={() => setSelectedTicketOrder(o)}
+                  >
+                    <Printer className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 p-0 text-muted-foreground hover:text-primary shrink-0"
+                    title="Print garment bag hangtag & claim stub"
+                    onClick={() => setSelectedHangtagOrder(o)}
+                  >
+                    <Tag className="size-4" />
+                  </Button>
+                </div>
               </div>
             );
           })}
@@ -150,6 +178,20 @@ function Orders() {
         open={open}
         onOpenChange={setOpen}
         onSaved={(id) => navigate({ to: "/orders/$id", params: { id } })}
+      />
+      <CuttingTicketModal
+        open={!!selectedTicketOrder}
+        onOpenChange={(isOpen) => !isOpen && setSelectedTicketOrder(null)}
+        order={selectedTicketOrder}
+        businessName={b.name}
+        currency={b.currency}
+      />
+      <GarmentHangtagModal
+        open={!!selectedHangtagOrder}
+        onOpenChange={(isOpen) => !isOpen && setSelectedHangtagOrder(null)}
+        order={selectedHangtagOrder}
+        businessName={b.name}
+        currency={b.currency}
       />
     </div>
   );

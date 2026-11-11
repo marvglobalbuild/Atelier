@@ -42,26 +42,50 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    const msg = error instanceof Error ? error.message : String(error);
+    if (
+      msg.includes("Importing a module script failed") ||
+      msg.includes("Failed to fetch dynamically imported module") ||
+      msg.includes("error loading dynamically imported module")
+    ) {
+      const last = Number(sessionStorage.getItem("atelier_chunk_reload") || "0");
+      if (Date.now() - last > 5000) {
+        sessionStorage.setItem("atelier_chunk_reload", String(Date.now()));
+        window.location.reload();
+      }
+    }
   }, [error]);
+
+  const msg = error instanceof Error ? error.message : String(error);
+  const isChunkError =
+    msg.includes("Importing a module script failed") ||
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("error loading dynamically imported module");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {isChunkError ? "Application updated" : "This page didn't load"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {isChunkError
+            ? "A newer version of the application has been deployed. Refresh to load the latest components."
+            : "Something went wrong on our end. You can try refreshing or head back home."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
-              router.invalidate();
-              reset();
+              if (isChunkError) {
+                window.location.reload();
+              } else {
+                router.invalidate();
+                reset();
+              }
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            {isChunkError ? "Reload page" : "Try again"}
           </button>
           <a
             href="/"
@@ -121,6 +145,29 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('vite:preloadError', function () {
+                window.location.reload();
+              });
+              window.addEventListener('error', function (e) {
+                var msg = e && e.message ? String(e.message) : '';
+                if (
+                  msg.indexOf('Importing a module script failed') !== -1 ||
+                  msg.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+                  msg.indexOf('error loading dynamically imported module') !== -1
+                ) {
+                  var last = Number(sessionStorage.getItem('atelier_chunk_reload') || '0');
+                  if (Date.now() - last > 5000) {
+                    sessionStorage.setItem('atelier_chunk_reload', String(Date.now()));
+                    window.location.reload();
+                  }
+                }
+              });
+            `,
+          }}
+        />
         <HeadContent />
       </head>
       <body>

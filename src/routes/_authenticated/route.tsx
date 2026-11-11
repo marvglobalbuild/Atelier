@@ -18,6 +18,7 @@ import {
   Scissors,
   Settings,
   Users,
+  Layers,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { businessQuery, useBusiness } from "@/lib/api";
@@ -54,6 +55,7 @@ const NAV = [
   { to: "/orders", label: "Orders", icon: Scissors },
   { to: "/payments", label: "Payments", icon: CreditCard },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/inventory", label: "Fabric & Stock", icon: Layers },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 

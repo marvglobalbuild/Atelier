@@ -19,6 +19,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { useAdminAuth } from "@/lib/admin-auth";
+import { getPlatformSettings } from "@/lib/admin-api";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -280,6 +281,22 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         </header>
+
+        {getPlatformSettings().maintenanceMode && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-900 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="font-semibold">Maintenance Mode Active:</span>
+              <span>{getPlatformSettings().maintenanceMessage}</span>
+            </div>
+            <Link
+              to="/admin/settings"
+              className="text-[11px] font-medium underline text-amber-900 hover:text-black shrink-0 ml-2"
+            >
+              Configure
+            </Link>
+          </div>
+        )}
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (

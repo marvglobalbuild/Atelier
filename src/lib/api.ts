@@ -123,10 +123,39 @@ export const orderQuery = (id: string) =>
           .select("asset_id, style_assets(*)")
           .eq("order_id", id),
       );
+
+      let fallbackMeasurements: {
+        garment: string;
+        unit: string;
+        values: { label: string; value: number }[];
+      } | null = null;
+
+      if ((snapshots ?? []).length === 0 && order?.customer_id) {
+        const { data: latestSets } = await supabase
+          .from("customer_measurement_sets")
+          .select("*, customer_measurement_values(*)")
+          .eq("customer_id", order.customer_id)
+          .order("taken_on", { ascending: false })
+          .limit(1);
+
+        if (latestSets && latestSets.length > 0) {
+          const s = latestSets[0];
+          fallbackMeasurements = {
+            garment: s.garment,
+            unit: s.unit,
+            values: (s.customer_measurement_values || []).map((v) => ({
+              label: v.label,
+              value: Number(v.value),
+            })),
+          };
+        }
+      }
+
       return {
         order,
         payments: payments ?? [],
         snapshots: snapshots ?? [],
+        fallbackMeasurements,
         styles: (styles ?? []).map((s) => s.style_assets).filter(Boolean) as StyleAsset[],
       };
     },
@@ -137,7 +166,7 @@ export const paymentsQuery = queryOptions({
   queryFn: async () => {
     const res = await supabase
       .from("payments")
-      .select("*, orders(id, outfit_name, customers(full_name))")
+      .select("*, orders(id, outfit_name, price, customers(id, full_name, phone))")
       .order("paid_on", { ascending: false });
     return check(res) ?? [];
   },
@@ -200,7 +229,7 @@ export const appointmentsQuery = queryOptions({
   queryFn: async () => {
     const res = await supabase
       .from("appointments")
-      .select("*, customers(full_name), orders(outfit_name)")
+      .select("*, customers(id, full_name, phone), orders(id, outfit_name, status, due_date)")
       .order("starts_at");
     return check(res) ?? [];
   },
